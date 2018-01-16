@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet"> 
+<style> /* set the CSS */
+
+body {
+  font-size: 12px;
+  font-family: 'Quicksand', sans-serif;
+  margin-top: 10px;
+  display:flex;
+  width:800px;
+  flex-direction: column;
+}
+
+
+h1{
+ display: flex;
+ justify-content: center;   
+}
+path { 
+    stroke: black;
+    stroke-width: 2;
+    fill: none;
+}
+
+#credit{
+      color:grey;
+      text-indent: 20px;
+      line-height: 30px;
+}
+
+.d3-tip {
+        line-height: 1;
+        /*font-weight: bold;*/
+        position: absolute;
+        padding: 5px;
+        max-width: 220px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        border-radius: 1px;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: rgb(192,192,192);
+    stroke-width: 0.5;
+    shape-rendering: crispEdges;
+}
+
+.axis ticks{
+    fill: none;
+    stroke: none;
+}
+
+
+</style>
+<body>
+
+<h1>Poll aggregation of presidential approval ratings</h1>
+<h5 id="credit"> Source: FiveThirtyEight</h5>
+<!-- load the d3.js library -->    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script>
+
+<script>
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 120, bottom: 150, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+// Set the ranges
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]).domain([0, 100]);
+
+// Define the axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom").ticks(5);
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left").ticks(6);
+
+// Define the line
+var dis_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.approve_estimate); });
+
+var app_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.disapprove_estimate); });
+
+// var approve_tip = d3.tip()
+//         .attr('class', 'd3-tip')
+//         .offset([-10, 0])
+//         .html(function(d) {
+//             return "Approval rating: " + d.approve_estimate  +"%" +"<br>"+ "<br>"+ "Days into Presidency: "+d.dop;
+//         });
+
+// var disapprove_tip = d3.tip()
+//         .attr('class', 'd3-tip')
+//         .offset([-10, 0])
+//         .html(function(d) {
+//             return "Days into Presidency: "+ d.dop;
+//         });
+
+
+    
+// Adds the svg canvas
+var svg = d3.select("body")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+
+
+// svg.call(disapprove_tip);
+// svg.call(approve_tip);
+// Get the data
+d3.csv("approval_topline_adults.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.disapprove_estimate = +d.disapprove_estimate;
+        d.approve_estimate = +d.approve_estimate;
+    });
+
+
+
+    // Scale the range of the data
+    x.domain(d3.extent(data, function(d) { return d.dop; }));
+    y.domain([0, 100]); 
+
+    
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["red", "blue"]);
+
+
+
+    svg.append("path")      
+        .attr("class", "line")
+        .style("stroke", "blue")
+        .attr("d", dis_line(data));
+        // .on('mouseover', disapprove_tip.show)
+        // .on('mouseout', disapprove_tip.hide);
+
+    svg.append("path")      
+        .attr("class", "line")
+        .style("stroke", "red")
+        .attr("d", app_line(data));
+        // .on('mouseover', approve_tip.show)
+        // .on('mouseout', approve_tip.hide);
+
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove_estimate) + ")")
+        .attr("dy", ".30em")
+        .attr("text-anchor", "start")
+        .style("fill", "red")
+        .text("Disapproval rating");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve_estimate) + ")")
+        .attr("dy", ".30em")
+        .attr("text-anchor", "start")
+        .style("fill", "blue")
+        .text("Approval rating");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .text("Days into presidency");
+});
+
+</script>
+</body>

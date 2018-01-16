@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+body {
+  font-size: 12px;
+  font-family: 'ABCSans', sans-serif, 'ABCSerif', serif;
+  margin-top: 10px;
+  display:flex;
+  width:800px;
+  flex-direction: column;
+
+}
+.line{
+  stroke: grey;
+  stroke-width: 2;
+}
+
+h1{
+  display: flex;
+  font-family: 'ABCSerif', serif;
+  font-weight: bold;
+  justify-content: center;   
+}
+
+path {
+  stroke: black;
+  stroke-width: 2;
+  fill: none;
+}
+
+.line--fade {
+  opacity: 0.5;  
+}
+  
+.line--hover {
+  stroke-width: 4px;
+  opacity: 1.0;
+}
+path { 
+    stroke: none;
+    font-family:ABCSans;
+    stroke-width: 1;
+    fill: none;
+}
+.axis line{
+    stroke:lightgray;
+    stroke-width: 1;
+    stroke-dasharray: 2,2;
+}
+.axis ticks{
+    fill: none;
+    stroke: none;
+}
+
+
+</style>
+<body>
+
+<h1>Approval rating within own party</h1>
+
+<!-- load the d3.js library -->    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script> -->
+
+<script>
+
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 90, bottom: 150, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+// Set the ranges
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]).domain([0,100]);
+
+
+var xticks = [100,200,300,365];
+var xtickLabels = ['100','200','300','365']
+
+
+var yticks = [50,60,70,80,90,100];
+var ytickLabels = ['50%','60%','70%','80%','90%','100%']
+
+
+// Define the axes
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickValues(xticks)
+    .tickFormat(function(d,i){ return xtickLabels[i] });
+
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .innerTickSize(-width)
+    .orient("left")
+    .tickValues(yticks)
+    .tickFormat(function(d,i){ return ytickLabels[i] });
+
+// Define the line
+var line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.inparty_app); });
+    
+// Adds the svg canvas
+var svg = d3.select("body")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+    
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+
+// Get the data
+d3.csv("approval_pid_4.csv", function(error, data) {
+    data.forEach(function(d) {
+		d.dop = +d.dop;
+		d.inparty_app = +d.inparty_app;
+    });
+
+
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([50, 100]); 
+
+    // Nest the entries by symbol
+    var dataNest = d3.nest()
+        .key(function(d) {return d.presName;})
+        .entries(data);
+
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["grey","#E03434"]);
+        // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    // Loop through each symbol / key
+    dataNest.forEach(function(d) {
+
+        svg.append("path")
+            .attr("class", "line")
+            .style("stroke", function() { // Add dynamically
+                return d.color = color(d.key=="Trump"); })
+            .attr("d", line(d.values))
+            .on("mouseover", mouseover)
+            .on("mouseout", mouseout)
+
+    });
+
+
+
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-weight", "bold")
+        .text("Number of days into presidency");
+
+     svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + (height-310) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .text("Trump");
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + (height-400) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "grey")
+        .text("Bush");
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + (height-290) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "grey")
+        .text("Obama");
+
+      svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + (height-240) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "grey")
+        .text("Clinton");
+
+  function mouseover(d) {
+    var me = this;
+    d3.selectAll(".line").classed("line--hover", function() {
+      return (this === me);
+    }).classed("line--fade", function() {
+      return (this !== me);
+    });
+  }
+  
+  function mouseout(d) {
+    d3.selectAll(".line")
+      .classed("line--hover", false)
+      .classed("line--fade", false);
+  }
+});
+
+
+
+
+</script>
+</body>

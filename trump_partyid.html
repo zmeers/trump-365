@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href='http://fonts.googleapis.com/css?family=Abel' rel='stylesheet' type='text/css'>
+<style> /* set the CSS */
+
+body {
+  font-size: 12px;
+  font-family: 'Abel', sans-serif;
+  margin-top: 10px;
+  display:flex;
+  flex-direction: column;
+
+}
+
+div{
+  display: flex;
+  justify-content: left;
+}
+
+path { 
+    stroke: black;
+    stroke-width: 2;
+    fill: none;
+}
+
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: none;
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+.axis ticks{
+    fill: none;
+    stroke: none;
+}
+
+/*
+.btns5 {
+    background-color: white;
+    color:  gray;
+    border-radius: 10px;
+    border: 1.5px solid gray;
+}
+.btns5:hover {
+    background-color: gray;
+    color: white;
+}*/
+
+
+</style>
+<body>
+
+<h1>Presidential approval rating broken down by party ID (Source: Gallup)</h1>
+
+<!-- <div width=670>
+<img src="https://openclipart.org/download/272132/Donald-Trump-Portrait-By-Heblo.svg" onclick="updateData_trump()" width=100px height=100px/>
+<img src="https://openclipart.org/download/236683/Realistic-Barack-Obama-Portrait.svg" onclick="updateData_obama()" width=100px height=100px/>
+<img src="https://openclipart.org/download/120913/CHACEL1013georgeWBush.svg" onclick="updateData_bush()" width=100px height=100px/>
+<img src="https://openclipart.org/download/290762/bill-clinton.svg" onclick="updateData_clinton()" width=100px height=100px/>
+</div>
+ -->
+<!-- <btns class="btns btns5"  id="trump"  style="font-size:1rem;">Trump</btns>
+<btns class="btns btns5" onclick="updateData_obama()" id="obama" style="font-size:1rem;"> Obama</btns>
+<btns class="btns btns5" onclick="updateData_bush()" id="bush"  style="font-size:1rem;"> Bush</btns>
+<btns class="btns btns5" onclick="updateData_clinton()" id="clinton" style="font-size:1rem;"> Clinton</btns>
+ -->
+
+<a href="https://openclipart.org/detail/293295/donald-trump-head"></a>
+<!-- load the d3.js library -->    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 80, bottom: 150, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+// Set the ranges
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]).domain([0, 100]);
+
+// Define the axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom").ticks(5);
+
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left").ticks(6);
+
+// Define the line
+var rep_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.rep_app); });
+
+var dem_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.dem_app); });
+
+var ind_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.ind_app); });
+
+    
+// Adds the svg canvas
+var svg = d3.select("body")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+
+// Get the data
+d3.csv("trump_ratings.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.rep_app = +d.rep_app;
+        d.ind_app = +d.ind_app;
+        d.dem_app = +d.dem_app;
+    });
+
+
+
+    // Scale the range of the data
+    x.domain(d3.extent(data, function(d) { return d.dop; }));
+    y.domain([0, 100]); 
+
+    // Nest the entries by symbol
+    // var dataNest = d3.nest()
+    //     .key(function(d) {return d.presName;})
+    //     .entries(data);
+
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["grey", "blue", "red"]);
+
+
+    // Loop through each symbol / key
+    // dataNest.forEach(function(d) {
+
+    //     svg.append("path")
+    //         .attr("class", "line")
+    //         .style("stroke", function() { // Add dynamically
+    //             return d.color = color(d.key=="Trump"); })
+    //         .attr("d", line(d.values))
+
+    // });
+
+    svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "blue")
+        .attr("d", rep_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "red")
+        .attr("d", dem_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", ind_line(data));
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dem_app) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "red")
+        .text("Democrats");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].rep_app) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "blue")
+        .text("Republicans");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].ind_app) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .text("Independents");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .text("Days into presidency");
+
+});
+
+
+</script>
+</body>
