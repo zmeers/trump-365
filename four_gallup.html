@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+ <script type='text/javascript' src='https://code.jquery.com/jquery.min.js'></script>
+<style> /* set the CSS */
+
+body {
+    font-size: 12px;
+    font-family: 'ABCSans', sans-serif,'ABCSerif', serif;
+    margin-top: 10px;
+    display:flex;
+    width:800px;
+    flex-direction: column;
+    justify-content: center;
+}
+
+h1{
+    font-family:ABCSerif;
+    display: flex;
+    justify-content: center;   
+}
+
+div{
+    display: flex;
+    justify-content: center;
+}
+
+path { 
+    stroke: none;
+    font-family:ABCSans;
+    stroke-width: 1;
+    fill: none;
+}
+.axis line{
+    stroke:lightgray;
+    stroke-width: 1;
+    stroke-dasharray: 2,2;
+}
+.axis ticks{
+    fill: none;
+    stroke: none;
+}
+.btns {
+    width:15%;
+    min-width: 15%;
+    height:100%;
+    font-family:ABCSans;
+    color: white;
+    padding: 2px 2px;
+    text-align: center;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+.line{
+    stroke: grey;
+    stroke-width: 2;
+}
+
+</style>
+
+
+<body>
+
+<h1>Presidential job approval rating according to American adults</h1>
+
+<div>
+<btns class="btns" id="orig" onclick="updateData_trump()">Donald Trump</btns>
+<btns class="btns" onclick="updateData_obama()">Barack Obama</btns>
+<btns class="btns" onclick="updateData_bush()">George W. Bush</btns>
+<btns class="btns" onclick="updateData_clinton()">Bill Clinton</btns>
+</div>
+
+<!-- load the d3.js library -->    
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+
+<script>
+
+// Set the dimensions of the canvas / graph
+var margin = {top: 30, right: 100, bottom: 150, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+// Set the ranges
+var x = d3.scale.linear().range([0, width]);
+var y = d3.scale.linear().range([height, 0]).domain([0, 100]);
+
+var xticks = [100,200,300,365];
+var xtickLabels = ['100','200','300','365']
+
+var yticks = [0,20,40,60,80,100];
+var ytickLabels = ['0%','20%','40%','60%','80%','100%']
+
+
+// Define the axes
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickValues(xticks)
+    .tickFormat(function(d,i){ return xtickLabels[i] });
+
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .innerTickSize(-width)
+    .orient("left")
+    .tickValues(yticks)
+    .tickFormat(function(d,i){ return ytickLabels[i] });
+
+
+// Define the line
+var app_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.approve); });
+
+var dis_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.disapprove); });
+
+var dk_line = d3.svg.line()
+    .x(function(d) { return x(d.dop); })
+    .y(function(d) { return y(d.dk); });
+
+// Adds the svg canvas
+var svg = d3.select("body")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+    
+// Get the data
+d3.csv("trump_365.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.app_line = +d.approve;
+        d.dk_line = +d.dk;
+        d.dis_line = +d.disapprove;
+    });
+
+
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([0, 100]); 
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["grey",  "#2E6FC9","#E03434"]);
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(45))
+        .attr('y1', y(0))
+        .attr('x2', x(45))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(45))
+        .attr("y",  y(100))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Revised travel ban goes into effect");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(97))
+        .attr('y1', y(0))
+        .attr('x2', x(97))
+        .attr('y2', y(90));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(97))
+        .attr("y",  y(90))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("New tax plan proposed");
+
+   // svg.append('line') //9/11 line
+   //      .attr("class", "line")
+   //      .attr("stroke-dasharray", "2,2")
+   //      .attr('x1', x(187))
+   //      .attr('y1', y(0))
+   //      .attr('x2', x(187))
+   //      .attr('y2', y(100));
+
+   //  svg.append("text")      // text label for the x axis
+   //      .attr("x", x(187))
+   //      .attr("y",  y(100))
+   //      .style("text-anchor", "center")
+   //      .text("Transgender military ban");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(189))
+        .attr('y1', y(0))
+        .attr('x2', x(189))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(189))
+        .attr("y",  y(100))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Health care bill defeated by Sen. McCain");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(333))
+        .attr('y1', y(0))
+        .attr('x2', x(333))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(333))
+        .attr("y",  y(100))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Sweeping tax bill passed");
+
+
+    svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "#2E6FC9")
+        .attr("d", app_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "#E03434")
+        .attr("d", dis_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", dk_line(data));
+
+
+        //label lines
+    svg.append("text") 
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#2E6FC9")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Approve");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Disapprove");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dk) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Unsure");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-weight","bold")
+        .text("Number of days into presidency");
+
+
+});
+
+//obama ratings
+function updateData_obama() {
+d3.csv("Obama_365.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.app_line = +d.approve;
+        d.dk = +d.dk;
+        d.dis_line = +d.disapprove;
+    });
+
+
+    svg.selectAll("*").remove();
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([0, 100]); 
+
+
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["grey", "#E03434", "#2E6FC9"]);
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(29))
+        .attr('y1', y(0))
+        .attr('x2', x(29))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(29))
+        .attr("y",  y(100))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Economic stimulus bill passed; military presence in Afghanistan doubled");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(262))
+        .attr('y1', y(0))
+        .attr('x2', x(262))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(262))
+        .attr("y",  y(100))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Wins Nobel peace prize");
+
+    svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "#2E6FC9")
+        .attr("d", app_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "#E03434")
+        .attr("d", dis_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", dk_line(data));
+
+
+        //label lines
+    svg.append("text") 
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#2E6FC9")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Approve");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Disapprove");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dk) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Unsure");
+
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-weight","bold")
+        .text("Number of days into presidency");
+
+});
+    };
+
+    //trump update
+function updateData_trump() {
+    d3.csv("trump_365.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.app_line = +d.approve;
+        d.dk = +d.dk;
+        d.dis_line = +d.disapprove;
+    });
+
+
+    svg.selectAll("*").remove();
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([0, 100]); 
+
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+    //color 
+
+    var color = d3.scale.ordinal()
+    .range(["grey", "#2E6FC9", "#E03434"]);
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(45))
+        .attr('y1', y(0))
+        .attr('x2', x(45))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(45))
+        .attr("y",  y(100))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Revised travel ban goes into effect");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(97))
+        .attr('y1', y(0))
+        .attr('x2', x(97))
+        .attr('y2', y(90));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(97))
+        .attr("y",  y(90))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("New tax plan proposed");
+
+   // svg.append('line') //9/11 line
+   //      .attr("class", "line")
+   //      .attr("stroke-dasharray", "2,2")
+   //      .attr('x1', x(187))
+   //      .attr('y1', y(0))
+   //      .attr('x2', x(187))
+   //      .attr('y2', y(100));
+
+   //  svg.append("text")      // text label for the x axis
+   //      .attr("x", x(187))
+   //      .attr("y",  y(100))
+   //      .style("text-anchor", "center")
+   //      .text("Transgender military ban");
+
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(189))
+        .attr('y1', y(0))
+        .attr('x2', x(189))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(189))
+        .attr("y",  y(100))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Health care bill defeated by Sen. McCain");
+
+   svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(333))
+        .attr('y1', y(0))
+        .attr('x2', x(333))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(333))
+        .attr("y",  y(100))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Sweeping tax bill passed");
+
+      svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "#2E6FC9")
+        .attr("d", app_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "#E03434")
+        .attr("d", dis_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", dk_line(data));
+
+
+        //label lines
+    svg.append("text") 
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#2E6FC9")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Approve");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Disapprove");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dk) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Unsure");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-weight","bold")
+        .text("Number of days into presidency");
+
+});
+    };
+
+    //clinton data
+function updateData_clinton() {
+    d3.csv("clinton_365.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.app_line = +d.approve;
+        d.dk = +d.dk;
+        d.dis_line = +d.disapprove;
+    });
+
+
+    svg.selectAll("*").remove();
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([0, 100]); 
+
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+    //color 
+
+    // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+    var color = d3.scale.ordinal()
+    .range(["grey", "#2E6FC9", "#E03434"]);
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(89))
+        .attr('y1', y(0))
+        .attr('x2', x(89))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(89))
+        .attr("y",  y(100))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("75 people die in hostage stand-off ordered by US Attorney General (appointed by Pres. Clinton)");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(180))
+        .attr('y1', y(0))
+        .attr('x2', x(180))
+        .attr('y2', y(90));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(180))
+        .attr("y",  y(90))
+        .style("text-anchor", "center")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("Gay soldiers allowed to join US military but prohibited from serving openly");
+
+    svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "#2E6FC9")
+        .attr("d", app_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "#E03434")
+        .attr("d", dis_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", dk_line(data));
+
+
+        //label lines
+    svg.append("text") 
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#2E6FC9")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Approve");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Disapprove");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dk) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Unsure");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-weight","bold")
+        .text("Number of days into presidency");
+
+});
+    };
+    //bush data
+function updateData_bush() {
+d3.csv("bush_365.csv", function(error, data) {
+    data.forEach(function(d) {
+        d.dop = +d.dop;
+        d.app_line = +d.approve;
+        d.dk = +d.dk;
+        d.dis_line = +d.disapprove;
+    });
+
+
+    svg.selectAll("*").remove();
+
+    // Scale the range of the data
+    x.domain([0,365]);
+    y.domain([0, 100]); 
+
+    svg.append("text")      // text label for the credit
+        .attr("x", x(0) )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-family", "ABCSerif")
+        .style("font-style", "italic")
+        .text("Source: Gallup");
+    //color 
+
+    var color = d3.scale.ordinal()
+        .range(["grey", "#2E6FC9", "#E03434"]);
+            // Add the X Axis
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+  // Add the Y Axis
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(47))
+        .attr('y1', y(0))
+        .attr('x2', x(47))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(47))
+        .attr("y",  y(100))
+        .style("text-anchor", "start")
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .text("House of Representatives passed Republican tax plan");
+
+    svg.append('line') //9/11 line
+        .attr("class", "line")
+        .attr("stroke-dasharray", "2,2")
+        .attr('x1', x(233))
+        .attr('y1', y(0))
+        .attr('x2', x(233))
+        .attr('y2', y(100));
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", x(225))
+        .attr("y",  y(100))
+        .style("font-size", "10px")
+        .style("font-family", "ABCSans")
+        .style("text-anchor", "start")
+        .text("9/11");
+
+    svg.append("path")      // Add the republican path.
+        .attr("class", "line")
+        .style("stroke", "#2E6FC9")
+        .attr("d", app_line(data));
+
+    svg.append("path")      // Add the democrat path.
+        .attr("class", "line")
+        .style("stroke", "#E03434")
+        .attr("d", dis_line(data));
+
+
+    svg.append("path")      // Add the independent path.
+        .attr("class", "line")
+        .style("stroke", "grey")
+        .attr("d", dk_line(data));
+
+
+        //label lines
+    svg.append("text") 
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].approve) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#2E6FC9")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Approve");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].disapprove) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "#E03434")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Disapprove");
+
+    svg.append("text")
+        .attr("transform", "translate(" + (width+3) + "," + y(data[0].dk) + ")")
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .style("fill", "gray")
+        .style("font-size", "12px")
+        .style("font-family", "ABCSans")
+        .text("Unsure");
+
+    svg.append("text")      // text label for the x axis
+        .attr("x", width / 2 )
+        .attr("y",  height + margin.bottom - 80)
+        .style("text-anchor", "middle")
+        .style("font-weight","bold")
+        .text("Number of days into presidency");
+    
+       
+
+
+});
+    };
+
+jQuery(function(){
+   jQuery('#orig').click();
+});
+        $('btns').click(function() {
+        this.style.fontWeight = 'bold'
+        this.style.color='white'
+        this.style.backgroundColor='gray'
+        $(this).siblings().css('font-weight', 'normal')
+        $(this).siblings().css('color', 'gray')
+        $(this).siblings().css('background-color', 'white')
+    });
+
+</script>
+
+
+
+</body>
